@@ -4,7 +4,7 @@
 -- There are multiple times that differ based on Use case
 
 -- Basic Joins in SQL
--- 1. NO JOIN: Returns data from both tables without combining them
+-- 1. NO JOIN: Returns data from both tables seperately without combining them
 /* Retrive all data from customers and orders in 2 different result */
 SELECT * FROM customers;
 SELECT * FROM orders;
