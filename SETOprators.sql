@@ -106,7 +106,112 @@ FROM employees
 /* The UNION operator combines the result sets of two or more SELECT queries into a single list and 
 automatically removes duplicate rows. The database engine performs an internal 
 sorting and filtering pass to ensure every returned record is completely unique.*/
+/* Task: Combine the data from customers and employees in one table */
+SELECT 
+	firstname,
+	lastname
+FROM customers
+
+UNION
+
+SELECT 
+	firstname, 
+	lastname
+FROM employees
 
 
+-- 2. UNION ALL
+/* Returns all rows from both queries including duplicates.
+Task: Combine the data from the table employees and customers into one table, including duplicates */
+SELECT 
+	firstname, 
+	lastname
+FROM customers
+UNION ALL
+SELECT
+	firstname, 
+	lastname
+FROM employees
 
 
+-- 3. EXCEPT
+/* Returns all the distinct rows from first query that are not found in the second query
+It is the only one where the order of queries effects the final result.	
+Task: Find the employees who are not customers at the same time */
+SELECT 
+	firstname,
+	lastname
+FROM employees
+EXCEPT
+SELECT 
+	firstname,
+	lastname
+FROM customers
+
+-- Here, we need to pay attention to the order. If we switch the tables we will get the customers who are not employees
+SELECT 
+	firstname,
+	lastname
+FROM customers
+EXCEPT
+SELECT 
+	firstname,
+	lastname
+FROM employees
+
+
+--- 4.INTERSECT
+/* Returns only the rows that are common in both queries. Its similar to an INNER JOIN. The order of the queries does not matter but the first queries columns will be used as names for the resultant table columns
+Task: Find the customers who are also employees. */
+SELECT 
+	firstname,
+	lastname
+FROM customers
+INTERSECT
+SELECT 
+	firstname,
+	lastname
+FROM employees
+
+-- Task : 
+/* Orders data are stored in separate tables (Orders and OrdersArchive).
+Combine all orders data into one report without duplicates. */
+SELECT *
+FROM orders
+UNION
+SELECT * 
+FROM ordersarchive
+
+/* Note: When combining tables never use asterisk (*) to combine tables; list needed columns instead. */
+SELECT 
+'Orders' AS SourceTable,
+	orderid,
+	productid,
+	customerid,
+	salespersonid,
+	orderdate,
+	shipdate,
+	orderstatus,
+	shipaddress,
+	billaddress,
+	quantity,
+	sales, 
+	creationtime
+FROM orders
+UNION
+SELECT
+'OrdersArchive' as SourceTable,
+	orderid,
+	productid,
+	customerid,
+	salespersonid,
+	orderdate,
+	shipdate,
+	orderstatus,
+	shipaddress,
+	billaddress,
+	quantity,
+	sales, 
+	creationtime
+FROM ordersarchive
+ORDER BY orderid
