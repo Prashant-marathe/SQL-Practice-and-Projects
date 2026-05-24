@@ -61,14 +61,25 @@ SELECT
 	EXTRACT(DAY FROM creationtime) AS current_day
 FROM orders
 
+SELECT 
+	orderid,
+	creationtime,
+	EXTRACT(YEAR FROM creationtime) AS year_col
+FROM orders
+
 -- 2. DATE_PART()
-/* 'DATE_TIME' achieves identical results but utilizes a comma seperated syntax where the date part is passed as string literal. */
+/* 'DATE_PART' achieves identical results but utilizes a comma seperated syntax where the date part is passed as string literal. */
 SELECT
 	orderid,
 	creationtime,
 	DATE_PART('year', creationtime) AS current_year,
 	DATE_PART('month', creationtime) AS current_month,
-	DATE_PART('day', creationtime) AS current_day
+	DATE_PART('day', creationtime) AS current_day,
+	DATE_PART('week', creationtime) AS week_dp,
+	DATE_PART('quarter', creationtime) AS quarter_dp,
+	DATE_PART('hour', creationtime) AS hour_dp,
+	DATE_PART('minute', creationtime) AS minute_dp,
+	DATE_PART('second', creationtime) AS second_dp
 FROM orders
 
 -- 3. DATE_TRUNC() 
@@ -78,13 +89,23 @@ it rounds down a timestamp to a specific precision level
 SELECT
 	orderid,
 	creationtime,
-	DATE_TRUNC('month', creationtime) AS month_start
+	DATE_TRUNC('month', creationtime) AS month_start,
+	DATE_TRUNC('hour', creationtime) AS start_hour,
+	DATE_TRUNC('minute', creationtime) AS start_minute,
+	DATE_TRUNC('second', creationtime) AS start_second
 FROM orders
 /* Counting shipped aggregated by week */
 SELECT
 	DATE_TRUNC('week', shipdate) AS week_starting, COUNT(*)
 from orders
 GROUP BY week_starting
+/* Another example for showing why DATE_TRUNC(part, date) is amazing */
+SELECT 
+	DATE_TRUNC('month', creationtime) AS creation,
+	-- creationtime,		-- In this case the level of detail makes it harder to group creationtime. So, we can use DATE_TRUNC() and round the time to hour or even day, month, or year to group creationtime
+	COUNT(*)
+FROM orders
+GROUP BY DATE_TRUNC('month', creationtime)
 
 -- 3. Alternative to EOMONTH (End of Month)
 /* Postgres does not have an EOMONTH() function. To find the last day of a given month, you combine a date calculation pattern using Postgres 'INTERVAL' data type: 
@@ -99,8 +120,105 @@ SELECT
 	- INTERVAL '1 day') :: date AS end_of_month
 FROM orders
 
+-- 4. PostgreSQL does not have a built-in DATENAME function; the primary alternative is the TO_CHAR() function, which formats date or timestamp values into strings using specific format templates. 
+/* TO_CHAR(CURRENT_TIMESTAMP, part): To replicate common DATENAME behaviors, use the following format specifiers:
+
+Full Day Name: Use 'Day' for capitalized (e.g., "Saturday"), 'DAY' for uppercase ("SATURDAY"), or 'day' for lowercase ("saturday"). 
+Abbreviated Day Name: Use 'DY' for uppercase ("SAT"), 'Dy' for capitalized ("Sat"), or 'dy' for lowercase ("sat"). 
+Full Month Name: Use 'Month' for capitalized ("January"), 'MONTH' for uppercase ("JANUARY"), or 'month' for lowercase ("january"). 
+Abbreviated Month Name: Use 'Mon' for capitalized ("Jan"). */
+-- Example
+SELECT 
+	orderdate,
+	TO_CHAR(orderdate, 'Month') AS full_month_name_Cap,
+	TO_CHAR(orderdate, 'MONTH') AS full_month_name_upper,
+	TO_CHAR(orderdate, 'month') AS full_month_name_lower,
+	TO_CHAR(orderdate, 'Mon') AS abbr_month_name_Cap,
+	TO_CHAR(orderdate, 'Day') AS full_day_name_Cap
+FROM orders
+
+
+-- Use case for Date and Time Extraction
+-- 1. Data Aggregation : How many orders were placed each month?
+SELECT 
+	DATE_TRUNC('month', orderdate),
+	COUNT(*) AS nr_of_orders
+FROM orders
+GROUP BY DATE_TRUNC('month', orderdate)
+ORDER BY DATE_TRUNC('month', orderdate) ASC
+
+SELECT 
+	-- EXTRACT(MONTH FROM orderdate) AS orders_month,
+	TO_CHAR(orderdate, 'Month') AS orders_month,
+	COUNT(*) AS nr_of_orders
+FROM orders
+GROUP BY TO_CHAR(orderdate, 'Month')
+ORDER BY TO_CHAR(orderdate, 'Month') ASC
+
+-- How many orders were placed each year?
+SELECT 
+	EXTRACT(YEAR FROM orderdate) AS orders_year,
+	COUNT(*) AS nr_of_orders
+FROM orders
+GROUP BY EXTRACT(YEAR FROM orderdate)
+
+-- 2. Data Filtering : Show all orders that were placed during the month of February
+SELECT 
+	TO_CHAR(orderdate, 'Mon') AS orders_month,
+	orderid,
+	orderdate,
+	shipdate,
+	shipaddress,
+	quantity,
+	creationtime,
+	sales
+FROM orders
+WHERE TO_CHAR(orderdate, 'Mon') = 'Feb'
+
 
 
 -- 2. Format & Casting
+
+-- Formatting Functions in PostgreSQL: PostgreSQL uses specialized template patterns (like 'YYYY' for a 4-digit year, 'MM' for a month, and 'DD' for a day) to handle formatting.
+-- A. TO_CHAR()
+/* -- Definition: Converts a timestamp, date, or numeric value to a 
+formatted text string based on a specified layout mask.
+-- Syntax: 'TO_CHAR(value, 'format_pattern')' */
+
+-- Example (Formatting a Date):
+SELECT 
+	TO_CHAR(orderdate, 'Day, DD Month YYYY') AS readable_date
+FROM orders
+
+-- Example (Formatting Currency/Numbers)
+SELECT TO_CHAR(12500.00, '99,999.99') AS formatted_currency
+
+
+-- Casting Functions In PostgreSQL
+/* Definition: To convert data types explicitly, PostgreSQL provides two 
+distinct syntax pathways:the standard ANSI(CAST()) function and the 
+Postgres-native shorthand '::' operator.*/
+
+-- A. The standard CAST() Function
+/* Definition: Conforms to universal SQL standards to convert an expression to a target data type.
+Syntax: CAST(expression AS target_data_type)
+Example: Conveting a text string extracted from an API into an actual calculator-ready integer.*/
+SELECT CAST('42', AS INTEGER) AS total_count
+
+-- B. The PostgreSQL Shortcut Operator (::)
+/* Definition: A proprietary, highly popular Postgres-native shorthand operator that performs identical type conversions with cleaner, more concise syntax.
+Syntax: `expression::target_data_type`
+Example 1 (Text to Date):	*/
+SELECT '2026-05-24'::DATE AS registeration_date
+
+-- Example 2 (Timestamp to Time): Slicing off the calendar date to isolate just the clock time.
+SELECT NOW()::TIME AS current_clock_time
+
+
+
+
+
+
+
 -- 3. Calculations
 -- 4. Validation
