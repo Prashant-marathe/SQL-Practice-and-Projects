@@ -193,6 +193,36 @@ FROM orders
 -- Example (Formatting Currency/Numbers)
 SELECT TO_CHAR(12500.00, '99,999.99') AS formatted_currency
 
+-- Working with various formats
+SELECT 
+	orderdate,
+	creationtime,
+	TO_CHAR(creationtime, 'mm-dd-yyyy') usa_format,
+	TO_CHAR(creationtime, 'dd-mm-yyyy') europian_format,
+	TO_CHAR(creationtime, 'd') d,
+	TO_CHAR(creationtime, 'dd') dd,
+	TO_CHAR(creationtime, 'ddd') ddd,
+	TO_CHAR(creationtime, 'Mon') Mon,
+	TO_CHAR(creationtime, 'Month') Month_cap,
+	TO_CHAR(creationtime, 'MONTH') month_full,
+	TO_CHAR(creationtime, 'month') month_full_lower
+FROM orders
+
+-- Task: Show creationtime using the following format "Day, Wed Jan Q1 2025 12:34:56 PM"
+SELECT
+	creationtime,
+	format('Day, %s', TO_CHAR(creationtime, 'Dy Mon Q1 YYYY HH:MM:SS PM'))
+FROM orders
+
+-- Task: How many orders were placed in each month? (Use date formatting)
+SELECT
+	TO_CHAR(orderdate, 'Mon YY') orderdate,
+	COUNT(*)
+FROM orders
+GROUP BY TO_CHAR(orderdate, 'Mon YY')
+
+
+
 
 -- Casting Functions In PostgreSQL
 /* Definition: To convert data types explicitly, PostgreSQL provides two 
@@ -203,7 +233,10 @@ Postgres-native shorthand '::' operator.*/
 /* Definition: Conforms to universal SQL standards to convert an expression to a target data type.
 Syntax: CAST(expression AS target_data_type)
 Example: Conveting a text string extracted from an API into an actual calculator-ready integer.*/
-SELECT CAST('42', AS INTEGER) AS total_count
+SELECT CAST('42' AS INTEGER) AS total_count
+
+-- Example: String to Int convert
+SELECT CAST('123' AS INTEGER) AS "String to Int Convert"
 
 -- B. The PostgreSQL Shortcut Operator (::)
 /* Definition: A proprietary, highly popular Postgres-native shorthand operator that performs identical type conversions with cleaner, more concise syntax.
