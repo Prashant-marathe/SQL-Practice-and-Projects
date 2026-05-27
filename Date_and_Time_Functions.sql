@@ -1,4 +1,4 @@
--- DATE AND TIME FUNCTIONS SQL
+-- ^ DATE AND TIME FUNCTIONS SQL
 /* In SQL, temporal data types are used to track when events happen -- such as transaction times, account creation dates, or scheduling deadlines. Because time can be tracked down to the nanosecond, or just as a broad calendar day, SQL divides this information into specific data types. */
 
 --  What is Date and Time in SQL?
@@ -247,11 +247,91 @@ SELECT '2026-05-24'::DATE AS registeration_date
 -- Example 2 (Timestamp to Time): Slicing off the calendar date to isolate just the clock time.
 SELECT NOW()::TIME AS current_clock_time
 
-
-
-
-
-
-
 -- 3. Calculations
--- 4. Validation
+/* Postgres allows you to perform addition, substraction, multiplication, and division on temporal data using 
+(+, -, *, /) operators alongside the INTERVAL data type.*/
+
+-- * INTERVAL: The Core Secret
+/* To perform math or dates, you must understand the INTERVAL data type. An interval represents a span of time (e.g., '3 days', '2 months', '5 hours'). You use to tell postgres exactly how much time to add or substract.*/
+-- Common formats:
+	-- INTERVAL '1 day'
+	-- INTERVAL '4 weeks'
+	-- INTERVAL '2 months 15 days'
+	-- INTERVAL '1 year 3 months'
+
+-- Basic Date Arithmetic Operations
+
+-- A. Adding Time to a Date / Timestamp (Date + INTERVAL)
+/* Syntax: base_date + INTERVAL 'quantity unit' 
+Example: Add 2 years in the order_date */
+SELECT 
+	orderdate,
+	orderdate + INTERVAL '2 years' as future
+FROM orders
+
+SELECT 
+	orderdate,
+	creationtime + INTERVAL '2 months' as future
+FROM orders
+
+-- B. Substracting Time from Date/Timestamp (Date-Interval)
+/* Example:  */
+SELECT 
+	orderdate,
+	creationtime,
+	orderdate - INTERVAL '2 years' two_years_in_past,
+	creationtime - INTERVAL '2 months' two_months_in_past
+FROM orders
+
+-- Substracting a Date from another Date (Date - Date)
+/* Syntax: future_date - past_date 
+Example: Substract orderdate from creationtime */
+SELECT 
+	orderdate,
+	shipdate,
+	shipdate - orderdate as days
+FROM orders
+
+-- Example: Calculate the age of employees
+SELECT 
+	NOW() - birthdate AS empAGE
+FROM employees
+ 
+-- Find the average shipping duration in days for each month
+SELECT 
+	EXTRACT(MONTH FROM shipdate),
+	AVG(EXTRACT(MONTH FROM shipdate))
+FROM orders
+GROUP BY EXTRACT(MONTH FROM shipdate)
+
+/* We can also substract an timestamp from another timestamp. We only have one timestamp column so that gives me an excuse to not write an example...*/
+
+-- C. Advanced multiplication and division with intervals
+/* We cannot multiply two dates together (as that makes no physical sense), but you can multiply or divide an INTERVAL by a regular number. */
+
+	-- i. INTERVAL multiplication
+	/* Example: if a billing cycle repeats every 3 months, calculate how far out an account will renew after 4 consecutivev billing cycles */
+	SELECT 
+		NOW() + (INTERVAL '3 months' * 4) AS final_renewal_date 
+	/* so it basically multiplied 3 with 4 making the 3 months 12 months */
+
+	-- ii. INTERVAL Division
+	/* Example: Split a standard 30-day project phase into three equal milestones to find out how many days each milestone gets. */
+	SELECT INTERVAL '30 days' / 3 AS milestone_duration
+
+-- D. Built-In Mathematical Functions for Dates
+/* Aside from standard math symbols, Postgres provides unique build-in functions to handle age calculations*/
+	-- i. AGE() function:
+	/* Definition: Calculates the precise difference between two timestamps and returns the 
+	output as a highly detailed, readable interval showing years, months, and days. If you only
+	pass in one date, it automatically substracts that date from the current system time (NOW()) 
+	Syntax: AGE(future_date, past_date) or AGE(past_date)
+	Example: Finding my exact age */
+	SELECT 
+		AGE('2025-05-27', '2004-01-01') AS myAge,
+		AGE('2004-01-01') AS myAge2
+		
+	SELECT 
+		AGE('2004-01-01'::TIMESTAMP) AS myAge
+
+
