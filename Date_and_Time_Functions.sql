@@ -334,4 +334,38 @@ GROUP BY EXTRACT(MONTH FROM shipdate)
 	SELECT 
 		AGE('2004-01-01'::TIMESTAMP) AS myAge
 
+-- 4. Date Validation
+/* In Postgres validating an date means verifying that a given text can be safely
+converted to into a real calendar date by the database engine without throwing an error that crashes your application.
+If you pass an invalid date (like '2026-02-31' or 'hello') into a standard Postgres query, it 
+immediately aborts the transaction. Here is the complete breakdown of how to validate dates in PostgreSQL safely.*/
 
+-- i) Safe Run-Time validation (preventing crashes)
+	-- The old way: Custom function 
+	CREATE OR REPLACE FUNCTION is_valid_date(date_text TEXT) 
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    -- Attempt to cast the text to a date
+	    PERFORM date_text::DATE;
+	    RETURN TRUE;
+	EXCEPTION 
+	    -- Catch invalid text formatting or calendar date overflows
+	    WHEN invalid_text_representation OR datetime_field_overflow THEN
+	        RETURN FALSE;
+	END;
+	$$ LANGUAGE plpgsql;
+
+
+	-- Usage:
+	SELECT is_valid_date('2026-05-27'), is_valid_date('2026-02-31')
+
+	-- ii) Enforcing a Specific Structural Format
+	/* Sometimes a string is a real calendar date, but it is written in a specific regional layout (like Day-Month-Year). You can use
+	TO_DATE() to validate and parse strings according to an exact template mask.
+	Syntax: TO_DATE(text_string, format_mask) 
+	Example: */
+	SELECT 
+		TO_DATE('27-05-2026', 'DD-MM-YYYY') AS parsed_date,
+		TO_DATE('2027/05/23', 'YYYY/MM/DD') AS parsed_date_with_slash
+
+	
