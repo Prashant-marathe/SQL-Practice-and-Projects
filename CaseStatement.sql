@@ -80,6 +80,61 @@ FROM orders
 GROUP BY categories
 ORDER BY total_sales DESC
 
+-- B. Mapping Columns
+/* Transform the values from one form to another 
+
+- Task 1: Retrieve employee details with gender displayed as full text */
+SELECT 
+	employeeid,
+	CONCAT(firstname, ' ', COALESCE(lastname, 'N/A')) AS fullname,
+	CASE gender
+		WHEN 'M' THEN 'Male'
+		WHEN 'F' THEN 'Female'
+		ELSE 'N/A'
+	END AS gender_full_text
+FROM employees
+
+-- Task 2: Retrieve customer details with abbreviated country code 
+SELECT 
+	customerid,
+	CONCAT(firstname, ' ', COALESCE(lastname, 'N/A')) AS fullname,
+	country,
+	CASE country
+		WHEN 'USA' THEN 'US'
+		WHEN 'Germany' THEN 'DE'
+		ELSE 'N/A'
+	END AS country_abbr
+from customers
 
 
+-- C. Handling NULLs
+/* Replace NULLS with specific value. NULLs can lead to inaccurate results, which can lead to wrong decision-making. 
+Task: Find the average scores of customers and treat NULLs as 0. And provide additional details such as customerid and lastname.  */
+SELECT 
+	customerid,
+	lastname,
+	score,
+	CASE
+		WHEN score IS NULL THEN 0
+		ELSE score
+	END AS score_clean,
+	AVG(CASE
+			WHEN score IS NULL THEN 0
+			ELSE score
+		END) OVER() avg_score_clean,
+	AVG(score) OVER() AS avg_score
+FROM customers
+
+-- 4. Conditional Aggregations
+/* Apply aggregate functions only on subsets of data that fulfill certain conditions. 
+Task: Count how many times each customer has made an order with sales greater than 30. */
+SELECT
+	customerid,
+	SUM(CASE 
+			WHEN sales > 30 THEN 1
+			ELSE 0
+		END) total_orders_high_sales,
+		COUNT(*) total_orders
+FROM orders
+GROUP BY customerid
 
