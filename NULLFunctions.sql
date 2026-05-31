@@ -87,4 +87,22 @@ Null is not equal to anything!
 	SELECT 
 		NULLIF(billaddress, '') AS billaddress_new
 	FROM orders
-	
+
+
+-- There is one more thing to understand is the NULL, empty string (''), and whitespace (   ) are not equal
+/* NULL: Means nothing, unknown!
+Empty String ('') : String value which has zero characters.
+WhiteSpace (  ): String value has one or more space characters.
+Example: */
+WITH ordersTemp AS (
+SELECT 1 Id, 'A'::VARCHAR AS Category 
+UNION ALL
+SELECT 2, NULL UNION ALL
+SELECT 3, '' UNION ALL
+SELECT 4, ' ' 
+)
+
+SELECT *,
+LENGTH(TRIM(Category)) AS nowhitespace,
+LENGTH(Category) AS CategoryLen
+FROM ordersTemp
