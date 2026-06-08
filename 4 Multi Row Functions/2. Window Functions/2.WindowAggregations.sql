@@ -134,7 +134,33 @@ Trend analysis: Providing insights into historical patterns
 They aggregate sequence of members, and the aggregation is updated each time a new member is added. */
  
 -- RUNNING TOTAL: Aggregate all values from the beginning up to the current point withour dropping off older data
+
 -- ROLLING TOTAL: Aggregate all values within a fixed time window (e.g. 30 days)
 
 -- 2. MOVING AVERAGE	
+-- Task: Calculate the moving average of sales for each product over time
+SELECT
+	orderid,
+	orderdate,
+	productid,
+	sales,
+	FLOOR(AVG(sales) OVER(PARTITION BY productid)) AS avg_sales_by_product,
+	FLOOR(AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate)) AS moving_average
+FROM orders
+-- Task: Calculate the moving average of sales for each product over time, including only the next order
+SELECT
+	orderid,
+	orderdate,
+	productid,
+	sales,	
+	FLOOR(AVG(sales) OVER(
+		PARTITION BY productid 
+		ORDER BY orderdate 
+		ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING
+	))AS moving_avg
+FROM orders
+
+-- 3. Overall total
+-- 4. Total per groups
+
 
